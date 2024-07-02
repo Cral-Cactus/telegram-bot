@@ -1,9 +1,8 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { Telegraf } = require('telegraf');
 require('dotenv').config();
-
-const asdHandler = require('./commands/asd');
 
 const port = process.env.PORT || 3000;
 
@@ -14,11 +13,17 @@ expressApp.use(express.json());
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+const commandsDir = path.join(__dirname, 'commands');
+fs.readdirSync(commandsDir).forEach(file => {
+  if (file.endsWith('.js')) {
+    const commandHandler = require(path.join(commandsDir, file));
+    commandHandler(bot);
+  }
+});
+
 expressApp.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, '/index.html'));
 });
-
-asdHandler(bot);
 
 bot.on('channel_post', (ctx) => {
   const message = ctx.channelPost;
